@@ -36,6 +36,11 @@ export const AIChat: React.FC = () => {
   const [voiceError, setVoiceError] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<{ stop: () => void } | null>(null);
+
+  useEffect(() => {
+    return () => recognitionRef.current?.stop();
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -134,7 +139,12 @@ export const AIChat: React.FC = () => {
   };
 
   const handleVoiceInput = () => {
-    if (isListening) return;
+    if (isListening) {
+      recognitionRef.current?.stop();
+      recognitionRef.current = null;
+      setIsListening(false);
+      return;
+    }
 
     if (!isSpeechRecognitionSupported()) {
       setVoiceError(t('voice_unsupported'));
@@ -145,19 +155,24 @@ export const AIChat: React.FC = () => {
     setVoiceError(null);
     setIsListening(true);
 
-    startSpeechRecognition(language, {
+    recognitionRef.current = startSpeechRecognition(language, {
       onStart: () => setIsListening(true),
       onResult: (transcript) => {
+        recognitionRef.current = null;
         setIsListening(false);
         setInputText(transcript);
         handleSend(transcript);
       },
       onError: (err) => {
+        recognitionRef.current = null;
         setIsListening(false);
         setVoiceError(err);
         setTimeout(() => setVoiceError(null), 4000);
       },
-      onEnd: () => setIsListening(false)
+      onEnd: () => {
+        recognitionRef.current = null;
+        setIsListening(false);
+      }
     });
   };
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Mic, X, Sparkles, Volume2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { startSpeechRecognition, speakText, isSpeechRecognitionSupported } from '../utils/speech';
@@ -18,6 +18,19 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [voiceError, setVoiceError] = useState<string | null>(null);
+  const recognitionRef = useRef<{ stop: () => void } | null>(null);
+
+  useEffect(() => {
+    return () => recognitionRef.current?.stop();
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) {
+      recognitionRef.current?.stop();
+      recognitionRef.current = null;
+      setIsListening(false);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -31,18 +44,23 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
     setTranscript('');
     setIsListening(true);
 
-    startSpeechRecognition(language, {
+    recognitionRef.current = startSpeechRecognition(language, {
       onStart: () => setIsListening(true),
       onResult: (text) => {
+        recognitionRef.current = null;
         setIsListening(false);
         setTranscript(text);
         onTranscribe?.(text);
       },
       onError: (err) => {
+        recognitionRef.current = null;
         setIsListening(false);
         setVoiceError(err);
       },
-      onEnd: () => setIsListening(false)
+      onEnd: () => {
+        recognitionRef.current = null;
+        setIsListening(false);
+      }
     });
   };
 
@@ -90,7 +108,11 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
             </button>
           ) : (
             <button
-              onClick={() => setIsListening(false)}
+              onClick={() => {
+                recognitionRef.current?.stop();
+                recognitionRef.current = null;
+                setIsListening(false);
+              }}
               className="px-5 py-2.5 rounded-lg bg-[#b91c1c] text-white text-xs font-bold hover:bg-red-700 transition-colors"
             >
               Stop
