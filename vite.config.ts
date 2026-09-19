@@ -14,7 +14,7 @@ export default defineConfig(() => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['icon.svg', 'apple-touch-icon.png'],
+        includeAssets: ['icon.svg', 'gramsahay-logo.svg'],
         manifest: {
           id: '/',
           name: 'GramSahay AI',
@@ -27,25 +27,25 @@ export default defineConfig(() => {
           scope: '/',
           icons: [
             {
-              src: '/pwa-192x192.png',
+              src: '/gramsahay-logo.svg',
               sizes: '192x192',
-              type: 'image/png',
+              type: 'image/svg+xml',
               purpose: 'any',
             },
             {
-              src: '/pwa-512x512.png',
+              src: '/gramsahay-logo.svg',
               sizes: '512x512',
-              type: 'image/png',
+              type: 'image/svg+xml',
               purpose: 'any',
             },
             {
-              src: '/pwa-maskable-512x512.png',
+              src: '/gramsahay-logo.svg',
               sizes: '512x512',
-              type: 'image/png',
+              type: 'image/svg+xml',
               purpose: 'maskable',
             },
             {
-              src: '/icon.svg',
+              src: '/gramsahay-logo.svg',
               sizes: '512x512',
               type: 'image/svg+xml',
               purpose: 'any',
