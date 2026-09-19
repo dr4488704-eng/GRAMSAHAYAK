@@ -1,0 +1,6 @@
+{
+  "name": "GramSahay AI",
+  "description": "Multilingual, voice-enabled rural government-scheme discovery and assistance platform.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
