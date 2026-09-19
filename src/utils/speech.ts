@@ -26,6 +26,19 @@ export interface SpeechRecognitionHandlers {
   onEnd?: () => void;
 }
 
+export async function requestMicrophonePermission(): Promise<boolean> {
+  if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) return true;
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({audio: true});
+    stream.getTracks().forEach(track => track.stop());
+    return true;
+  } catch (error: any) {
+    console.warn('Microphone permission request failed:', error);
+    return false;
+  }
+}
+
 type SpeechRecognitionInstance = {
   lang: string;
   continuous: boolean;
@@ -92,6 +105,7 @@ export function startSpeechRecognition(
     recognition.maxAlternatives = 1;
 
     let finalTranscript = '';
+    let deliveredTranscript = '';
     let stoppedByUser = false;
 
     recognition.onstart = () => {
@@ -108,8 +122,10 @@ export function startSpeechRecognition(
         if (text && result.isFinal) finalTranscript += `${text} `;
       }
 
-      if (finalTranscript.trim()) {
-        handlers.onResult(finalTranscript.trim());
+      const transcript = finalTranscript.trim();
+      if (transcript && transcript !== deliveredTranscript) {
+        deliveredTranscript = transcript;
+        handlers.onResult(transcript);
       }
     };
 
@@ -122,6 +138,9 @@ export function startSpeechRecognition(
 
     recognition.onend = () => {
       if (activeRecognition === recognition) activeRecognition = null;
+      if (!stoppedByUser && !deliveredTranscript) {
+        handlers.onError?.(getRecognitionErrorMessage('no-speech'));
+      }
       handlers.onEnd?.();
     };
 

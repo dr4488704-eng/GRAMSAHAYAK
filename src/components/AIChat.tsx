@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { ChatMessage } from '../types';
 import { useApp } from '../context/AppContext';
-import { startSpeechRecognition, speakText, stopSpeaking, isSpeechRecognitionSupported, isSpeechSynthesisSupported } from '../utils/speech';
+import { startSpeechRecognition, speakText, stopSpeaking, isSpeechRecognitionSupported, isSpeechSynthesisSupported, requestMicrophonePermission } from '../utils/speech';
 
 export const AIChat: React.FC = () => {
   const { language, t, profile, schemes } = useApp();
@@ -73,7 +73,7 @@ export const AIChat: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/assistant', {
+      const response = await fetch('/api/assistant/query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -138,7 +138,7 @@ export const AIChat: React.FC = () => {
     return `Based on your profile as a ${userProfile.occupation} in ${userProfile.state}, you may be eligible for multiple schemes. Please visit the "Schemes for You" tab to view personalized deterministic matches. For complete details, always verify with the respective official government portal.`;
   };
 
-  const handleVoiceInput = () => {
+  const handleVoiceInput = async () => {
     if (isListening) {
       recognitionRef.current?.stop();
       recognitionRef.current = null;
@@ -154,6 +154,12 @@ export const AIChat: React.FC = () => {
 
     setVoiceError(null);
     setIsListening(true);
+
+    if (!(await requestMicrophonePermission())) {
+      setIsListening(false);
+      setVoiceError('Microphone permission was denied. Allow microphone access in your browser settings and try again.');
+      return;
+    }
 
     recognitionRef.current = startSpeechRecognition(language, {
       onStart: () => setIsListening(true),
@@ -317,7 +323,11 @@ export const AIChat: React.FC = () => {
             <span>{t('listening')}</span>
           </div>
           <button 
-            onClick={() => setIsListening(false)}
+            onClick={() => {
+              recognitionRef.current?.stop();
+              recognitionRef.current = null;
+              setIsListening(false);
+            }}
             className="text-[11px] underline"
           >
             Cancel

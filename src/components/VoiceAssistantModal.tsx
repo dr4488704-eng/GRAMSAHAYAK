@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Mic, X, Sparkles, Volume2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { startSpeechRecognition, speakText, isSpeechRecognitionSupported } from '../utils/speech';
+import { startSpeechRecognition, speakText, isSpeechRecognitionSupported, requestMicrophonePermission } from '../utils/speech';
 
 interface VoiceAssistantModalProps {
   isOpen: boolean;
@@ -34,7 +34,7 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleStartListening = () => {
+  const handleStartListening = async () => {
     if (!isSpeechRecognitionSupported()) {
       setVoiceError(t('voice_unsupported'));
       return;
@@ -43,6 +43,12 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
     setVoiceError(null);
     setTranscript('');
     setIsListening(true);
+
+    if (!(await requestMicrophonePermission())) {
+      setIsListening(false);
+      setVoiceError('Microphone permission was denied. Allow microphone access in your browser settings and try again.');
+      return;
+    }
 
     recognitionRef.current = startSpeechRecognition(language, {
       onStart: () => setIsListening(true),
